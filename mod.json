@@ -1,0 +1,25 @@
+{
+	"geode": "4.9.0",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "alphalaneous.kablammo",
+	"name": "Kablammo",
+	"version": "v1.0.0",
+	"developer": "Alphalaneous",
+	"description": "Blow it up",
+	"dependencies": {
+		"geode.node-ids": ">=v1.20.0"
+	},
+	"resources": {
+		"files": [
+			"resources/*.ogg"
+		],
+		"sprites": [
+			"resources/*.png"
+		]
+	}
+}
