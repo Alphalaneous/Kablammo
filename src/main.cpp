@@ -173,7 +173,8 @@ $execute {
 
             while (true) {
                 auto it = objects.begin();
-                std::advance(it, kablammo_utils::randomInRange(1, static_cast<int>(objects.size())-1));
+                int steps = kablammo_utils::randomInRange(0, static_cast<int>(objects.size()) - 1);
+                for (int i = 0; i < steps; ++i) ++it;
                 objectID = it->first;
                 if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end()) break;
             }
