@@ -1,1 +1,5 @@
-Edit this file to change your mod's support info, or delete it if you don't need it.
+# Support me on Ko-fi
+
+Do you like what I make and want to help out financially, support me on my Ko-fi page!
+
+https://ko-fi.com/alphalaneous

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
-#include <random>
 
 using namespace geode::prelude;
 
@@ -12,9 +11,6 @@ protected:
     float m_strength;
     float m_interval;
     float m_timeSinceLast;
-    static std::mt19937 s_rng;
-    static std::uniform_real_distribution<float> s_dist;
-
     Shake();
 
 public:

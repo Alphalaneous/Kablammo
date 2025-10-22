@@ -1,7 +1,5 @@
 #include "Shake.hpp"
-
-std::mt19937 Shake::s_rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-std::uniform_real_distribution<float> Shake::s_dist(-1.f, 1.f);
+#include "Utils.hpp"
 
 Shake::Shake() : m_strength(0.f), m_interval(0.f), m_timeSinceLast(0.f), m_prevOffset(CCPoint{0, 0}) {}
 
@@ -38,8 +36,8 @@ void Shake::update(float dt) {
 
         if (m_pTarget) m_pTarget->setPosition(m_startPos);
 
-        float randX = s_dist(s_rng) * m_strength;
-        float randY = s_dist(s_rng) * m_strength;
+        float randX = kablammo_utils::randomInRange(0, 1) * m_strength;
+        float randY = kablammo_utils::randomInRange(0, 1) * m_strength;
         m_prevOffset = CCPoint{randX, randY};
 
         if (m_pTarget) m_pTarget->setPosition(m_startPos + m_prevOffset);

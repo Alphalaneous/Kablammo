@@ -10,7 +10,7 @@
 	"name": "Kablammo",
 	"version": "v1.0.0",
 	"developer": "Alphalaneous",
-	"description": "Blow it up",
+	"description": "Blow it all up",
 	"dependencies": {
 		"geode.node-ids": ">=v1.20.0"
 	},
@@ -20,6 +20,19 @@
 		],
 		"sprites": [
 			"resources/*.png"
-		]
-	}
+		],
+		"spritesheets": {
+			"EditorButtonSheet": [
+				"resources/standard-bomb.png"
+			]
+		}
+	},
+	"links": {
+		"homepage": "https://linktr.ee/Alphalaneous",
+		"source": "https://github.com/Alphalaneous/Kablammo",
+		"community": "https://discord.gg/Txn2CA5dHF"
+	},
+	"tags": [
+		"editor", "modtober25", "offline", "joke"
+	]
 }

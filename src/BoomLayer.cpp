@@ -42,56 +42,114 @@ bool BoomLayer::init(float heightOffset) {
 
     addChild(m_descriptionArea);
 
-    m_kablammoContainer = CCNode::create();
-    m_kablammoContainer->setContentSize({getContentWidth(), 130});
-    m_kablammoContainer->setAnchorPoint({0.5f, 0.f});
-    m_kablammoContainer->setPosition({getContentWidth()/2 - 1, -2});
-
-    auto kablammoContainerLayout = ColumnLayout::create();
-    kablammoContainerLayout->setGap(29);
-    kablammoContainerLayout->setAxisReverse(true);
-    kablammoContainerLayout->setAxisAlignment(AxisAlignment::End);
-    kablammoContainerLayout->setAutoScale(false);
-
-    m_kablammoContainer->setLayout(kablammoContainerLayout);
-
     auto layout = RowLayout::create();
     layout->setGap(5);
     layout->setAutoScale(false);
+
+    m_row1 = CCNode::create();
+    m_row1->setScale(0.75f);
+    m_row1->setContentSize({getContentWidth() / m_row1->getScale(), 30});
+    m_row1->setPosition({getContentWidth()/2, 103});
+    m_row1->setAnchorPoint({0.5f, 0.f});
+    m_row1->setLayout(layout);
+
+    addChild(m_row1);
+
+    m_row2 = CCNode::create();
+    m_row2->setScale(0.75f);
+    m_row2->setContentSize({getContentWidth() / m_row2->getScale(), 30});
+    m_row2->setPosition({getContentWidth()/2, 52});
+    m_row2->setAnchorPoint({0.5f, 0.f});
+    m_row2->setLayout(layout);
+
+    addChild(m_row2);
     
-    addChild(m_kablammoContainer);
+    auto navMenu = CCMenu::create();
+    navMenu->setContentSize({getContentWidth(), 30});
+    navMenu->setPosition({getContentWidth()/2, 10});
+    navMenu->setAnchorPoint({0.5f, 0.f});
+    navMenu->ignoreAnchorPointForPosition(false);
 
-    auto currentNode = CCNode::create();
-    currentNode->setScale(0.75f);
-    currentNode->setContentSize({getContentWidth() / currentNode->getScale(), 30});
-    currentNode->setAnchorPoint({0.5f, 0.f});
-    currentNode->setLayout(layout);
-
-    m_kablammoContainer->addChild(currentNode);
-
-    int count = 0;
-
-    for (const auto& [k, v] : KablammoObject::s_kablammoObjects) {
-        if (count == 5) {
-            currentNode->updateLayout();
-            currentNode = CCNode::create();
-            currentNode->setScale(0.75f);
-            currentNode->setContentSize({getContentWidth() / currentNode->getScale(), 30});
-            currentNode->setAnchorPoint({0.5f, 0.f});
-            currentNode->setLayout(layout);
-            m_kablammoContainer->addChild(currentNode);
-            count = 0;
-        }
-        auto obj = KablammoObject::create(v);
-        currentNode->addChild(obj);
-        m_kablammoObjects.push_back(obj);
-        count++;
+    if (KablammoObject::s_kablammoObjects.size() <= 10) {
+        navMenu->setVisible(false);
     }
 
-    currentNode->updateLayout();
-    m_kablammoContainer->updateLayout();
+    addChild(navMenu);
+
+    auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    prevSpr->setScale(0.5f);
+    auto prevBtn = CCMenuItemSpriteExtra::create(prevSpr, this, menu_selector(BoomLayer::onPrevPage));
+    prevBtn->setPosition({getContentWidth()/2 - 20, navMenu->getContentHeight()/2});
+    
+    navMenu->addChild(prevBtn);
+
+    auto nextSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
+    nextSpr->setScale(0.5f);
+    nextSpr->setFlipX(true);
+    auto nextBtn = CCMenuItemSpriteExtra::create(nextSpr, this, menu_selector(BoomLayer::onNextPage));
+    nextBtn->setPosition({getContentWidth()/2 + 20, navMenu->getContentHeight()/2});
+    
+    navMenu->addChild(nextBtn);
+
+    m_pageLabel = CCLabelBMFont::create("1", "bigFont.fnt");
+    m_pageLabel->setScale(0.35f);
+    m_pageLabel->setPosition({getContentWidth()/2, 25});
+
+    addChild(m_pageLabel);
+
+    goToPage(0);
 
     return true;
+}
+
+void BoomLayer::onPrevPage(CCObject* sender) {
+    if (KablammoObject::s_kablammoObjects.empty()) return;
+
+    int totalObjects = static_cast<int>(KablammoObject::s_kablammoObjects.size());
+    int totalPages = (totalObjects + 9) / 10;
+
+    m_page = (m_page - 1 + totalPages) % totalPages;
+    goToPage(m_page);
+}
+
+void BoomLayer::onNextPage(CCObject* sender) {
+    if (KablammoObject::s_kablammoObjects.empty()) return;
+
+    int totalObjects = static_cast<int>(KablammoObject::s_kablammoObjects.size());
+    int totalPages = (totalObjects + 9) / 10;
+
+    m_page = (m_page + 1) % totalPages;
+    goToPage(m_page);
+}
+
+void BoomLayer::goToPage(int page) {
+    m_kablammoObjects.clear();
+    m_row1->removeAllChildren();
+    m_row2->removeAllChildren();
+
+    m_pageLabel->setString(numToString(page + 1).c_str());
+
+    for (int i = 0; i < 10; i++) {
+        int index = i + page * 10;
+        if (index < KablammoObject::s_kablammoObjects.size()) {
+            const auto& v = KablammoObject::s_kablammoObjects.valueAt(i + page * 10);
+            if (!v) continue;
+
+            auto obj = KablammoObject::create(v.unwrap());
+
+            if (i < 5) {
+                m_row1->addChild(obj);
+            }
+            else if (i < 10) {
+                m_row2->addChild(obj);
+            }
+
+            m_kablammoObjects.push_back(obj);
+        }
+    }
+
+    m_row1->updateLayout();
+    m_row2->updateLayout();
 }
 
 void BoomLayer::registerWithTouchDispatcher() {
@@ -106,9 +164,7 @@ bool BoomLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
     bool touchedObject = false;
 
     for (const auto& obj : m_kablammoObjects) {
-        auto childBounds = obj->boundingBox();
-        childBounds.origin = obj->getParent()->convertToWorldSpace(childBounds.origin);
-        childBounds.size *= obj->getParent()->getScale();
+        auto childBounds = obj->getWorldBoundingBox();
         if (childBounds.containsPoint(pTouch->getLocation())) {
             obj->setColor({150, 150, 150});
             m_grabbedObject = obj;
@@ -175,7 +231,7 @@ void BoomLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
         float posY = localPosAR.y - editorUI->m_toolbarHeight / editorUI->m_positionSlider->getScale();
         
         if (m_grabbedObject) {
-            std::string obj = fmt::format("1,914,2,{},3,{},31,{},24,11", posX, posY, utils::base64::encode(fmt::format("kablammo:{}", m_grabbedObject->m_data.identifier)));
+            std::string obj = fmt::format("1,914,2,{},3,{},21,1011,31,{},24,11", posX, posY, utils::base64::encode(fmt::format("kablammo:{}", m_grabbedObject->m_data.identifier)));
             editorUI->pasteObjects(obj, true, true);
             editorUI->updateButtons();
             editorUI->updateObjectInfoLabel();

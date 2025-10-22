@@ -2,7 +2,6 @@
 #include <Geode/utils/base64.hpp>
 #include "TextGameObject.hpp"
 #include "Utils.hpp"
-#include "EditorUI.hpp"
 
 using namespace geode::prelude;
 
@@ -16,8 +15,7 @@ void MyTextGameObject::setupKablammo() {
         if (KablammoObject::identifierExists(pair.second)) {
             m_hasSpecialChild = true;
 
-            auto editorUI = MyEditorUI::get();
-            fields->m_kablammoObject = KablammoObject::create(pair.second, this, editorUI->getCurrentChannel());
+            fields->m_kablammoObject = KablammoObject::create(pair.second, this);
 
             for (auto child : getChildrenExt()) {
                 child->setVisible(false);
@@ -39,7 +37,6 @@ void MyTextGameObject::setupKablammo() {
                 obj->playFuse();
             });
 
-            editorUI->incrementChannel();
             fields->m_kablammoObject->prepareExplosion();
         }
     }
