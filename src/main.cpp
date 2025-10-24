@@ -466,23 +466,26 @@ $execute {
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             auto str = object->getSaveString(editor);
 
-            // cuz android :(
-            auto objectsStd = std::map<int, gd::string>(ObjectToolbox::sharedState()->m_allKeys);
+            auto& objects = ObjectToolbox::sharedState()->m_allKeys;
 
             int objectID = 1;
 
             while (true) {
-                auto it = objectsStd.find(object->m_objectID);
-                if (it != objectsStd.end()) {
-                    if (it != objectsStd.begin()) {
-                        auto prevIt = std::prev(it);
+                std::map<int, gd::string>::iterator it = objects.find(object->m_objectID);
+                if (it != objects.end()) {
+                    if (it != objects.begin()) {
+                        std::map<int, gd::string>::iterator prevIt = it;
+                        --prevIt;
                         objectID = prevIt->first;
-                    }
-                    else {
-                        objectID = objectsStd.rbegin()->first;
+                    } else {
+                        std::map<int, gd::string>::iterator lastIt = objects.end();
+                        --lastIt;
+                        objectID = lastIt->first;
                     }
                 }
-                if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end()) break;
+
+                if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end())
+                    break;
             }
             
             auto map = kablammo_utils::parseKV(str);
@@ -506,22 +509,28 @@ $execute {
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             auto str = object->getSaveString(editor);
 
-            auto objectsStd = std::map<int, gd::string>(ObjectToolbox::sharedState()->m_allKeys);
+            auto& objects = ObjectToolbox::sharedState()->m_allKeys;
 
             int objectID = 1;
 
             while (true) {
-                auto it = objectsStd.find(object->m_objectID);
-                if (it != objectsStd.end()) {
-                    if (it != objectsStd.begin()) {
-                        auto prevIt = std::next(it);
-                        objectID = prevIt->first;
-                    }
-                    else {
-                        objectID = objectsStd.begin()->first;
+                std::map<int, gd::string>::iterator it = objects.find(object->m_objectID);
+                if (it != objects.end()) {
+                    if (it != objects.begin()) {
+                        std::map<int, gd::string>::iterator nextIt = it;
+                        ++nextIt;
+                        if (nextIt != objects.end()) {
+                            objectID = nextIt->first;
+                        } else {
+                            objectID = objects.begin()->first;
+                        }
+                    } else {
+                        objectID = objects.begin()->first;
                     }
                 }
-                if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end()) break;
+
+                if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end())
+                    break;
             }
             
             auto map = kablammo_utils::parseKV(str);
