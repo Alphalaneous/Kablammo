@@ -198,7 +198,7 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
         const float x = kablammo_utils::randomInRange(0, 1) * (size.width - w);
         const float y = kablammo_utils::randomInRange(0, 1) * (size.height - h);
 
-        auto frag = CCSprite::createWithTexture(texture, CCRectMake(x, y, w, h));
+        auto frag = CCSprite::createWithTexture(texture, {x, y, w, h});
         frag->setPosition(object->getPosition() + CCPoint(x + w/2 - size.width/2, y + h/2 - size.height/2));
         frag->setScaleX(scaleX);
         frag->setScaleY(scaleY);
@@ -229,8 +229,10 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
     }
 
     queueInMainThread([object = Ref(object), editor = Ref(editor)] {
-        object->stopAllActions();
-        editor->removeObject(object, false);
+        if (object) {
+            object->stopAllActions();
+            editor->removeObject(object, false);
+        }
     });
 }
 
