@@ -466,19 +466,20 @@ $execute {
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             auto str = object->getSaveString(editor);
 
-            const auto& objects = ObjectToolbox::sharedState()->m_allKeys;
+            // cuz android :(
+            auto objectsStd = std::map(ObjectToolbox::sharedState()->m_allKeys);
 
             int objectID = 1;
 
             while (true) {
-                auto it = objects.find(object->m_objectID);
-                if (it != objects.end()) {
-                    if (it != objects.begin()) {
+                auto it = objectsStd.find(object->m_objectID);
+                if (it != objectsStd.end()) {
+                    if (it != objectsStd.begin()) {
                         auto prevIt = std::prev(it);
                         objectID = prevIt->first;
                     }
                     else {
-                        objectID = objects.rbegin()->first;
+                        objectID = objectsStd.rbegin()->first;
                     }
                 }
                 if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end()) break;
@@ -505,19 +506,19 @@ $execute {
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             auto str = object->getSaveString(editor);
 
-            const auto& objects = ObjectToolbox::sharedState()->m_allKeys;
+            auto objectsStd = std::map(ObjectToolbox::sharedState()->m_allKeys);
 
             int objectID = 1;
 
             while (true) {
-                auto it = objects.find(object->m_objectID);
-                if (it != objects.end()) {
-                    if (it != objects.begin()) {
+                auto it = objectsStd.find(object->m_objectID);
+                if (it != objectsStd.end()) {
+                    if (it != objectsStd.begin()) {
                         auto prevIt = std::next(it);
                         objectID = prevIt->first;
                     }
                     else {
-                        objectID = objects.begin()->first;
+                        objectID = objectsStd.begin()->first;
                     }
                 }
                 if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end()) break;
