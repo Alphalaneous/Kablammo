@@ -229,6 +229,7 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
     }
 
     queueInMainThread([object = Ref(object), editor = Ref(editor)] {
+        object->stopAllActions();
         editor->removeObject(object, false);
     });
 }
