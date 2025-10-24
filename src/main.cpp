@@ -35,6 +35,7 @@ static void randomizeIDs(LevelEditorLayer* editor, KablammoObject* kablammoObj, 
 
     editor->m_editorUI->pasteObjects(kablammo_utils::buildKV(map), true, true);
 
+    object->stopAllActions();
     editor->removeObject(object, false);
 }
 
@@ -492,7 +493,8 @@ $execute {
             map[1] = numToString(objectID);
 
             editor->m_editorUI->pasteObjects(kablammo_utils::buildKV(map), true, true);
-
+            
+            object->stopAllActions();
             editor->removeObject(object, false);
         }
 	});
@@ -538,6 +540,7 @@ $execute {
 
             editor->m_editorUI->pasteObjects(kablammo_utils::buildKV(map), true, true);
 
+            object->stopAllActions();
             editor->removeObject(object, false);
         }
 	});
