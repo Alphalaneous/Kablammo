@@ -471,14 +471,14 @@ $execute {
             int objectID = 1;
 
             while (true) {
-                std::map<int, gd::string>::iterator it = objects.find(object->m_objectID);
+                auto it = objects.find(object->m_objectID);
                 if (it != objects.end()) {
                     if (it != objects.begin()) {
-                        std::map<int, gd::string>::iterator prevIt = it;
+                        auto prevIt = it;
                         --prevIt;
                         objectID = prevIt->first;
                     } else {
-                        std::map<int, gd::string>::iterator lastIt = objects.end();
+                        auto lastIt = objects.end();
                         --lastIt;
                         objectID = lastIt->first;
                     }
@@ -514,10 +514,10 @@ $execute {
             int objectID = 1;
 
             while (true) {
-                std::map<int, gd::string>::iterator it = objects.find(object->m_objectID);
+                auto it = objects.find(object->m_objectID);
                 if (it != objects.end()) {
                     if (it != objects.begin()) {
-                        std::map<int, gd::string>::iterator nextIt = it;
+                        auto nextIt = it;
                         ++nextIt;
                         if (nextIt != objects.end()) {
                             objectID = nextIt->first;
