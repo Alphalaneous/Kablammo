@@ -467,7 +467,7 @@ $execute {
             auto str = object->getSaveString(editor);
 
             // cuz android :(
-            auto objectsStd = std::map(ObjectToolbox::sharedState()->m_allKeys);
+            auto objectsStd = std::map<int, gd::string>(ObjectToolbox::sharedState()->m_allKeys);
 
             int objectID = 1;
 
@@ -506,7 +506,7 @@ $execute {
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             auto str = object->getSaveString(editor);
 
-            auto objectsStd = std::map(ObjectToolbox::sharedState()->m_allKeys);
+            auto objectsStd = std::map<int, gd::string>(ObjectToolbox::sharedState()->m_allKeys);
 
             int objectID = 1;
 
