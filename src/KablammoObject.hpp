@@ -1,23 +1,33 @@
 #pragma once
 
-#include "Utils.hpp"
 #include <Geode/Geode.hpp>
 
 using namespace geode::prelude;
 
 class KablammoObject;
 
+enum class SearchShape {
+    Circle,
+    Square,
+    Diamond,
+    Triangle,
+    Star
+};
+
 struct KablammoObjectData {
 	using ObjectsModifier = std::function<void(LevelEditorLayer*, KablammoObject*, float distance, GameObject*)>;
 	using OnAction = std::function<void(LevelEditorLayer*, KablammoObject*)>;
+    SearchShape searchShape = SearchShape::Circle;
 	float explosionRadius = 0.f;
     bool skipRadiusCheck = false;
 	float explosionFuse = 0.f;
 	std::string explosionSound = "standard-explosion.ogg"_spr;
 	std::string fuseSound = "standard-fuse.ogg"_spr;
+    std::string bombSprite = "standard-bomb.png"_spr;
     std::string identifier = "unknown";
     std::string name = "Unknown";
     std::string description = "No Description";
+    std::string modifierText = "";
 	ObjectsModifier objectModifier = nullptr;
     OnAction onExplode = nullptr;
 	OnAction onHold = nullptr;
@@ -27,7 +37,7 @@ struct KablammoObjectData {
 class KablammoObject : public CCSprite {
 public:
 
-    static kablammo_utils::OrderedMap<std::string, KablammoObjectData> s_kablammoObjects;
+    static std::vector<KablammoObjectData> s_kablammoObjects;
 
     static KablammoObject* create(const KablammoObjectData& data, GameObject* object = nullptr);
     static KablammoObject* create(const std::string& identifier, GameObject* object = nullptr);
@@ -50,10 +60,12 @@ public:
     bool m_setWorldBoundingBox;
     bool m_blewUp;
 
-    static void registerObject(const KablammoObjectData& data);
+
+    // to the judges, I am making it like this cuz I might make it an api at some point
+    static geode::Result<> registerObject(const KablammoObjectData& data);
     static bool identifierExists(const std::string& identifier);
-    static const KablammoObjectData& dataFromIdentifier(const std::string& identifier);
+    static geode::Result<const KablammoObjectData&> dataFromIdentifier(const std::string& identifier);
     
     static void explodeObject(LevelEditorLayer* editor, GameObject* object, const CCPoint& explosionCenter);
-
+    static void forEachObjectInRadius(GJBaseGameLayer* gjbgl, std::function<void(GameObject*, float distance)> const& callback, std::function<bool(GameObject*)> const& skipped, GameObject* center, float radius, bool skipRadiusCheck = false, SearchShape searchShape = SearchShape::Circle);
 };

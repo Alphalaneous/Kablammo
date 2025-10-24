@@ -2,7 +2,7 @@
 #include "Utils.hpp"
 #include "Shake.hpp"
 
-kablammo_utils::OrderedMap<std::string, KablammoObjectData> KablammoObject::s_kablammoObjects;
+std::vector<KablammoObjectData> KablammoObject::s_kablammoObjects;
 
 KablammoObject* KablammoObject::create(const KablammoObjectData& data, GameObject* object) {
     auto ret = new KablammoObject();
@@ -15,12 +15,22 @@ KablammoObject* KablammoObject::create(const KablammoObjectData& data, GameObjec
 }
 
 KablammoObject* KablammoObject::create(const std::string& identifier, GameObject* object) {
-    return create(dataFromIdentifier(identifier), object);
+    if (auto res = dataFromIdentifier(identifier)) {
+        return create(res.unwrap(), object);
+    }
+    return nullptr;
 }
 
 bool KablammoObject::init(const KablammoObjectData& data, GameObject* object) {
-    if (!CCSprite::initWithFile(fmt::format("{}-bomb.png"_spr, data.identifier).c_str())) {
-        if (!CCSprite::initWithFile("standard-bomb.png"_spr)) return false;
+    if (!CCSprite::initWithFile(data.bombSprite.c_str())) return false;
+
+    if (!data.modifierText.empty() && !object) {
+        auto label = CCLabelBMFont::create(data.modifierText.c_str(), "bigFont.fnt");
+        label->setScale(0.4f);
+        label->setPosition({getContentWidth() + 3, 3});
+        label->setAnchorPoint({1.f, 0.5f});
+        label->limitLabelWidth(getContentWidth()-3.f, 0.4f, 0.1f);
+        addChild(label);
     }
 
     m_data = data;
@@ -90,11 +100,11 @@ void KablammoObject::explode(float dt) {
         m_blewUp = true;
         editor->m_editorUI->deselectAll();
 
-        kablammo_utils::forEachObjectInRadius(editor, [editor, this](GameObject* object, float distance) {
+        KablammoObject::forEachObjectInRadius(editor, [editor, this](GameObject* object, float distance) {
             if (m_data.objectModifier) m_data.objectModifier(editor, this, distance, object);
         }, [](GameObject* obj) -> bool {
             return obj->getUserObject("kablammo-enabled");
-        }, m_object, m_data.explosionRadius * 30, m_data.skipRadiusCheck);
+        }, m_object, m_data.explosionRadius * 30, m_data.skipRadiusCheck, m_data.searchShape);
 
         if (m_data.onExplode) m_data.onExplode(editor, this);
 
@@ -123,15 +133,22 @@ void KablammoObject::prepareExplosion() {
 }
 
 bool KablammoObject::identifierExists(const std::string& identifier) {
-	return s_kablammoObjects.contains(identifier);
+    return dataFromIdentifier(identifier).isOk();
 }
 
-void KablammoObject::registerObject(const KablammoObjectData& data) {
-    s_kablammoObjects[data.identifier] = data;
+geode::Result<> KablammoObject::registerObject(const KablammoObjectData& data) {
+    if (identifierExists(data.identifier)) {
+        return geode::Err("bomb by identifier {} already exists", data.identifier);
+    }
+    s_kablammoObjects.push_back(data);
+    return geode::Ok();
 }
 
-const KablammoObjectData& KablammoObject::dataFromIdentifier(const std::string& identifier) {
-    return s_kablammoObjects[identifier];
+geode::Result<const KablammoObjectData&> KablammoObject::dataFromIdentifier(const std::string& identifier) {
+    for (const auto& v : s_kablammoObjects) {
+        if (v.identifier == identifier) return geode::Ok(v);
+    }
+    return geode::Err("bomb by identifier {} doesn't exist", identifier);
 }
 
 CCRect KablammoObject::getWorldBoundingBox() {
@@ -214,4 +231,90 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
     queueInMainThread([object = Ref(object), editor = Ref(editor)] {
         editor->removeObject(object, false);
     });
+}
+
+// yoinked and modified from eclipse with permission, just grabs objects from visible section, my changes add distance and shape checks
+void KablammoObject::forEachObjectInRadius(GJBaseGameLayer* gjbgl, std::function<void(GameObject*, float distance)> const& callback, std::function<bool(GameObject*)> const& skipped, GameObject* center, float radius, bool skipRadiusCheck, SearchShape searchShape) {
+    if (!gjbgl || !center) return;
+
+    auto centerPos = center->getPosition();
+    float radiusSq = radius * radius;
+
+    std::vector<std::pair<float, float>> polygon;
+    switch (searchShape) {
+        case SearchShape::Triangle: {
+            float a = radius;
+            polygon = {
+                {0,  a},
+                {-a * 0.866f, -a * 0.5f},
+                {a * 0.866f, -a * 0.5f}
+            };
+            break;
+        }
+        case SearchShape::Star: {
+            int points = 5;
+            float angleOffset = M_PI / 2.0f;
+            for (int i = 0; i < points * 2; i++) {
+                float angle = M_PI / points * i + angleOffset;
+                float r = (i % 2 == 0) ? radius : radius * 0.5f;
+                polygon.emplace_back(r * std::cos(angle), r * std::sin(angle));
+            }
+            break;
+        }
+        default: break;
+    }
+
+    int sectionCount = gjbgl->m_sections.empty() ? -1 : static_cast<int>(gjbgl->m_sections.size());
+    for (int i = gjbgl->m_leftSectionIndex; i <= gjbgl->m_rightSectionIndex && i < sectionCount; ++i) {
+        auto leftSection = gjbgl->m_sections[i];
+        if (!leftSection) continue;
+
+        int leftSectionSize = static_cast<int>(leftSection->size());
+        for (int j = gjbgl->m_bottomSectionIndex; j <= gjbgl->m_topSectionIndex && j < leftSectionSize; ++j) {
+            auto section = leftSection->at(j);
+            if (!section) continue;
+
+            int sectionSize = gjbgl->m_sectionSizes[i]->at(j);
+            for (int k = 0; k < sectionSize; ++k) {
+                auto obj = section->at(k);
+                if (!obj) continue;
+
+                auto pos = obj->getPosition();
+                float dx = pos.x - centerPos.x;
+                float dy = pos.y - centerPos.y;
+                float absDx = std::abs(dx);
+                float absDy = std::abs(dy);
+                float distSq = dx * dx + dy * dy;
+                float euclidDist = std::sqrt(distSq);
+
+                bool inside = false;
+                float passDist = euclidDist;
+
+                switch (searchShape) {
+                    case SearchShape::Circle:
+                        inside = (distSq <= radiusSq);
+                        passDist = euclidDist;
+                        break;
+                    case SearchShape::Square:
+                        inside = (absDx <= radius && absDy <= radius);
+                        passDist = std::max(absDx, absDy);
+                        break;
+                    case SearchShape::Diamond:
+                        inside = (absDx + absDy <= radius);
+                        passDist = absDx + absDy;
+                        break;
+                    case SearchShape::Triangle:
+                    case SearchShape::Star:
+                        inside = kablammo_utils::pointInPolygon(polygon, dx, dy);
+                        passDist = euclidDist;
+                        break;
+                }
+
+                if (inside || skipRadiusCheck) {
+                    if (skipped && skipped(obj)) continue;
+                    if (callback) callback(obj, passDist);
+                }
+            }
+        }
+    }
 }

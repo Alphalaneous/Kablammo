@@ -79,7 +79,7 @@ bool BoomLayer::init(float heightOffset) {
     auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     prevSpr->setScale(0.5f);
     auto prevBtn = CCMenuItemSpriteExtra::create(prevSpr, this, menu_selector(BoomLayer::onPrevPage));
-    prevBtn->setPosition({getContentWidth()/2 - 20, navMenu->getContentHeight()/2});
+    prevBtn->setPosition({getContentWidth()/2 - 30, navMenu->getContentHeight()/2});
     
     navMenu->addChild(prevBtn);
 
@@ -87,11 +87,13 @@ bool BoomLayer::init(float heightOffset) {
     nextSpr->setScale(0.5f);
     nextSpr->setFlipX(true);
     auto nextBtn = CCMenuItemSpriteExtra::create(nextSpr, this, menu_selector(BoomLayer::onNextPage));
-    nextBtn->setPosition({getContentWidth()/2 + 20, navMenu->getContentHeight()/2});
+    nextBtn->setPosition({getContentWidth()/2 + 30, navMenu->getContentHeight()/2});
     
     navMenu->addChild(nextBtn);
 
-    m_pageLabel = CCLabelBMFont::create("1", "bigFont.fnt");
+    int totalObjects = static_cast<int>(KablammoObject::s_kablammoObjects.size());
+    int totalPages = (totalObjects + 9) / 10;
+    m_pageLabel = CCLabelBMFont::create(fmt::format("1 / {}", totalPages).c_str(), "bigFont.fnt");
     m_pageLabel->setScale(0.35f);
     m_pageLabel->setPosition({getContentWidth()/2, 25});
 
@@ -126,16 +128,17 @@ void BoomLayer::goToPage(int page) {
     m_kablammoObjects.clear();
     m_row1->removeAllChildren();
     m_row2->removeAllChildren();
+    int totalObjects = static_cast<int>(KablammoObject::s_kablammoObjects.size());
+    int totalPages = (totalObjects + 9) / 10;
 
-    m_pageLabel->setString(numToString(page + 1).c_str());
+    m_pageLabel->setString(fmt::format("{} / {}", page+1, totalPages).c_str());
 
     for (int i = 0; i < 10; i++) {
         int index = i + page * 10;
         if (index < KablammoObject::s_kablammoObjects.size()) {
-            const auto& v = KablammoObject::s_kablammoObjects.valueAt(i + page * 10);
-            if (!v) continue;
+            const auto& v = KablammoObject::s_kablammoObjects[i + page * 10];
 
-            auto obj = KablammoObject::create(v.unwrap());
+            auto obj = KablammoObject::create(v);
 
             if (i < 5) {
                 m_row1->addChild(obj);
@@ -176,7 +179,10 @@ bool BoomLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 
             addChild(m_draggedObject);
             auto& data = obj->m_data;
-            m_statsArea->setString(fmt::format("{}\nRadius: <cg>{}</c>\nFuse: <cg>{}s</c>", data.name, data.explosionRadius, data.explosionFuse));
+
+            std::string radiusText = data.explosionRadius != 0 ? numToString(data.explosionRadius) : "N/A";
+
+            m_statsArea->setString(fmt::format("{}\nRadius: <cg>{}</c>\nFuse: <cg>{}s</c>", data.name, radiusText, data.explosionFuse));
             m_descriptionArea->setString(data.description.c_str());
             touchedObject = true;
             break;
