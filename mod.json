@@ -8,12 +8,13 @@
 	},
 	"id": "alphalaneous.kablammo",
 	"name": "Kablammo",
-	"version": "v1.0.3",
+	"version": "v1.0.4",
 	"developer": "Alphalaneous",
 	"description": "Blow it all up",
 	"dependencies": {
 		"geode.node-ids": ">=v1.20.0",
-		"alk.better-touch-prio": ">=1.0.3"
+		"alk.better-touch-prio": ">=1.0.3",
+		"geode.texture-loader": ">=1.8.2"
 	},
 	"resources": {
 		"files": [

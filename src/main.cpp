@@ -1,6 +1,7 @@
 #include "EditorUI.hpp"
 #include "KablammoObject.hpp"
 #include "Utils.hpp"
+#include <Geode/modify/GameObject.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
 
 class $modify(EditorPauseLayer) {
@@ -33,6 +34,17 @@ class $modify(EditorPauseLayer) {
     }
 };
 
+// evil crash fix, setVisible is only ever called on GameObject when it is deleted or removed from the visible section, setOpacity is what is used to set it invisible everywhere else
+// I will eventually add a more robust fix
+class $modify(GameObject) {
+    void setVisible(bool visible) {
+        if (!visible && EditorUI::get()) {
+            stopAllActions();
+        }
+        GameObject::setVisible(visible);
+    }
+};
+
 // CRASHES YOUR FUCKING GAME NERD
 static std::vector<int> evilObjects = {
     1964, 1965, 1966, 1967, 1968, 1969, 
@@ -53,6 +65,8 @@ static bool hasAction(GameObject* object) {
 
 static void randomizeIDs(LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
     if (hasAction(object)) return;
+    if (object->m_objectID == 749) return;
+
     auto str = object->getSaveString(editor);
 
     const auto& objects = ObjectToolbox::sharedState()->m_allKeys;
@@ -77,6 +91,7 @@ static void randomizeIDs(LevelEditorLayer* editor, KablammoObject* kablammoObj, 
 
 static void blackHole(LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
     if (hasAction(object)) return;
+    if (object->m_objectID == 749) return;
 
     auto center = kablammoObj->m_object->getPosition();
     object->stopAllActions();
@@ -141,6 +156,8 @@ static void gay(LevelEditorLayer* editor, KablammoObject* kablammoObj, float dis
 }
 
 static void spread(LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+    if (object->m_objectID == 749) return;
+
     CCPoint delta = object->getPosition() - kablammoObj->m_object->getPosition();
     CCPoint dir = delta.normalize();
     float dist = delta.getLength();
@@ -159,6 +176,8 @@ static void spread(LevelEditorLayer* editor, KablammoObject* kablammoObj, float 
 }
 
 static void scaleSpread(LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+    if (object->m_objectID == 749) return;
+
     CCPoint delta = object->getPosition() - kablammoObj->m_object->getPosition();
     float baseDist = delta.getLength();
     CCPoint dir = delta.normalize();
@@ -304,6 +323,8 @@ $execute {
         .name = "Where",
         .description = "Objects continue to move randomly forever...",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+            if (object->m_objectID == 749) return;
+
             object->stopAllActions();
             auto repeat = CCRepeat::create(
                 CCSequence::create(
@@ -510,6 +531,7 @@ $execute {
         .description = "Decreases each object ID by 1",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             if (hasAction(object)) return;
+            if (object->m_objectID == 749) return;
 
             auto str = object->getSaveString(editor);
 
@@ -555,6 +577,7 @@ $execute {
         .description = "Increases each object ID by 1",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             if (hasAction(object)) return;
+            if (object->m_objectID == 749) return;
 
             auto str = object->getSaveString(editor);
 

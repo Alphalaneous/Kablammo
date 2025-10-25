@@ -74,6 +74,7 @@ namespace kablammo_utils {
 
 	static inline void fixObjectPosition(GameObject* object, LevelEditorLayer* editor) {
 		if (!EditorUI::get()) return;
+		if (object->getGroupDisabled()) return;
 		object->updateStartValues();
 		editor->reorderObjectSection(object);
 		editor->m_drawGridLayer->m_sortEffects = true;

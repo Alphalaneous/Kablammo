@@ -165,6 +165,7 @@ CCRect KablammoObject::getWorldBoundingBox() {
 
 void KablammoObject::safeDeleteObject(LevelEditorLayer* editor, GameObject* object) {
 	if (!LevelEditorLayer::get()) return;
+    if (object->m_objectID == 749) return;
 
     MyEditorUI::get()->addObjectToDelete(object);
 }
