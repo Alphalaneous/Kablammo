@@ -23,7 +23,7 @@ public:
     void hide();
     void goToPage(int page);
 
-    std::vector<Ref<KablammoObject>> m_kablammoObjects;
+    std::vector<KablammoObject*> m_kablammoObjects;
     KablammoObject* m_grabbedObject;
     KablammoObject* m_draggedObject;
     bool m_showing = false;

@@ -1,5 +1,5 @@
 # 1.0.2
-- Fix another crash
+- Fix more crashes
 
 # 1.0.1
 - Fix touch

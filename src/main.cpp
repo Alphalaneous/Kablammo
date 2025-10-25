@@ -1,5 +1,37 @@
+#include "EditorUI.hpp"
 #include "KablammoObject.hpp"
 #include "Utils.hpp"
+#include <Geode/modify/EditorPauseLayer.hpp>
+
+class $modify(EditorPauseLayer) {
+
+    void cleanupActions() {
+        if (auto editor = LevelEditorLayer::get()) {
+            for (auto object : CCArrayExt<GameObject*>(editor->m_objects)) {
+                object->stopAllActions();
+            }
+        }
+        if (auto editorUI = MyEditorUI::get()) {
+            editorUI->unscheduleAllSelectors();
+            editorUI->m_fields->m_objectsToRemove.clear();
+        }
+    }
+
+    void onSaveAndExit(cocos2d::CCObject* sender) {
+        cleanupActions();
+        EditorPauseLayer::onSaveAndExit(sender);
+    }
+
+    void onSaveAndPlay(cocos2d::CCObject* sender) {
+        cleanupActions();
+        EditorPauseLayer::onSaveAndPlay(sender);
+    }
+
+    void onExitNoSave(cocos2d::CCObject* sender) {
+        cleanupActions();
+        EditorPauseLayer::onExitNoSave(sender);
+    }
+};
 
 // CRASHES YOUR FUCKING GAME NERD
 static std::vector<int> evilObjects = {
@@ -15,7 +47,12 @@ static std::vector<int> evilObjects = {
     4400
 };
 
+static bool hasAction(GameObject* object) {
+    return object->getActionByTag(-49028) || object->getActionByTag(-294824) || object->getActionByTag(-294823);
+}
+
 static void randomizeIDs(LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+    if (hasAction(object)) return;
     auto str = object->getSaveString(editor);
 
     const auto& objects = ObjectToolbox::sharedState()->m_allKeys;
@@ -35,16 +72,19 @@ static void randomizeIDs(LevelEditorLayer* editor, KablammoObject* kablammoObj, 
 
     editor->m_editorUI->pasteObjects(kablammo_utils::buildKV(map), true, true);
 
-    object->stopAllActions();
-    editor->removeObject(object, false);
+    KablammoObject::safeDeleteObject(editor, object);
 }
 
 static void blackHole(LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+    if (hasAction(object)) return;
+
     auto center = kablammoObj->m_object->getPosition();
+    object->stopAllActions();
 
     auto pullAction = CCRepeat::create(
         CCSequence::create(
             CallFuncExt::create([editor, center, object] {
+                if (!LevelEditorLayer::get()) return;
                 auto pos = object->getPosition();
 
                 float dx = center.x - pos.x;
@@ -77,6 +117,7 @@ static void blackHole(LevelEditorLayer* editor, KablammoObject* kablammoObj, flo
         ),
         INT_MAX-1
     );
+    pullAction->setTag(-49028);
     object->runAction(pullAction);
 }
 
@@ -107,7 +148,7 @@ static void spread(LevelEditorLayer* editor, KablammoObject* kablammoObj, float 
 
     float speed = 200.f * (1.f - std::exp(-dist / 40.f));
     CCPoint offset = dir * speed;
-
+    object->stopAllActions();
     object->runAction(CCSequence::create(
         CCEaseIn::create(CCMoveBy::create(0.1f + kablammo_utils::randomInRange(0.f, 0.3f) * 0.1f, offset), 0.2f),
         CallFuncExt::create([object, editor] {
@@ -130,7 +171,7 @@ static void scaleSpread(LevelEditorLayer* editor, KablammoObject* kablammoObj, f
 
     CCPoint offset = dir * moveDist;
     float duration = 0.1f + kablammo_utils::randomInRange(0.f, 0.3f) * 0.1f;
-
+    object->stopAllActions();
     object->runAction(CCSequence::create(
         CCSpawn::create(
             CCEaseIn::create(CCMoveBy::create(duration, offset), 0.2f),
@@ -138,6 +179,7 @@ static void scaleSpread(LevelEditorLayer* editor, KablammoObject* kablammoObj, f
             nullptr
         ),
         CallFuncExt::create([object, editor, scaleFactor] {
+            if (!LevelEditorLayer::get()) return;
             object->m_scaleX = object->getScaleX();
             object->m_scaleY = object->getScaleY();
             kablammo_utils::fixObjectPosition(object, editor);
@@ -262,21 +304,22 @@ $execute {
         .name = "Where",
         .description = "Objects continue to move randomly forever...",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
-            object->runAction(
-                CCRepeat::create(
-                    CCSequence::create(
-                        CallFuncExt::create([object, editor] {
-                            int xOffset = kablammo_utils::randomInRange(-1, 1) * 30;
-                            int yOffset = kablammo_utils::randomInRange(-1, 1) * 30;
-                            object->setPosition({object->getPositionX() + xOffset, object->getPositionY() + yOffset});
-                            kablammo_utils::fixObjectPosition(object, editor);
-                        }),
-                        CCDelayTime::create(0.25),
-                        nullptr
-                    ),
-                    INT_MAX
-                )
+            object->stopAllActions();
+            auto repeat = CCRepeat::create(
+                CCSequence::create(
+                    CallFuncExt::create([object, editor] {
+                        int xOffset = kablammo_utils::randomInRange(-1, 1) * 30;
+                        int yOffset = kablammo_utils::randomInRange(-1, 1) * 30;
+                        object->setPosition({object->getPositionX() + xOffset, object->getPositionY() + yOffset});
+                        kablammo_utils::fixObjectPosition(object, editor);
+                    }),
+                    CCDelayTime::create(0.25),
+                    nullptr
+                ),
+                INT_MAX
             );
+            repeat->setTag(-294824);
+            object->runAction(repeat);
         }
 	});
 
@@ -290,12 +333,13 @@ $execute {
         .name = "SPIIINN",
         .description = "Objects continue to spin forever...",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
-            object->runAction(
-                CCRepeat::create(
-                    CCRotateBy::create(1, 360),
-                    INT_MAX
-                )
+            object->stopAllActions();
+            auto repeat = CCRepeat::create(
+                CCRotateBy::create(1, 360),
+                INT_MAX
             );
+            repeat->setTag(-294823);
+            object->runAction(repeat);
         }
 	});
 
@@ -465,6 +509,8 @@ $execute {
         .name = "Spin Down",
         .description = "Decreases each object ID by 1",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+            if (hasAction(object)) return;
+
             auto str = object->getSaveString(editor);
 
             auto& objects = ObjectToolbox::sharedState()->m_allKeys;
@@ -494,8 +540,7 @@ $execute {
 
             editor->m_editorUI->pasteObjects(kablammo_utils::buildKV(map), true, true);
             
-            object->stopAllActions();
-            editor->removeObject(object, false);
+            KablammoObject::safeDeleteObject(editor, object);
         }
 	});
 
@@ -509,6 +554,8 @@ $execute {
         .name = "Spin Up",
         .description = "Increases each object ID by 1",
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
+            if (hasAction(object)) return;
+
             auto str = object->getSaveString(editor);
 
             auto& objects = ObjectToolbox::sharedState()->m_allKeys;
@@ -518,17 +565,16 @@ $execute {
             while (true) {
                 auto it = objects.find(object->m_objectID);
                 if (it != objects.end()) {
-                    if (it != objects.begin()) {
-                        auto nextIt = it;
-                        ++nextIt;
-                        if (nextIt != objects.end()) {
-                            objectID = nextIt->first;
-                        } else {
-                            objectID = objects.begin()->first;
-                        }
+                    auto nextIt = it;
+                    ++nextIt;
+                    if (nextIt != objects.end()) {
+                        objectID = nextIt->first;
                     } else {
                         objectID = objects.begin()->first;
                     }
+                }
+                else {
+                    objectID = objects.begin()->first;
                 }
 
                 if (std::find(evilObjects.begin(), evilObjects.end(), objectID) == evilObjects.end())
@@ -540,8 +586,7 @@ $execute {
 
             editor->m_editorUI->pasteObjects(kablammo_utils::buildKV(map), true, true);
 
-            object->stopAllActions();
-            editor->removeObject(object, false);
+            KablammoObject::safeDeleteObject(editor, object);
         }
 	});
     
@@ -558,15 +603,18 @@ $execute {
         .modifierText = "999x",
         .onExplode = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj) {
             float currentAngle = editor->m_gameState.m_cameraAngle;
+            editor->stopActionByTag(-10429);
             auto rotateAction = CCRepeat::create(
                 CCSequence::create(
                     CallFuncExt::create([editor, currentAngle] {
+                        if (!LevelEditorLayer::get()) return;
                         editor->m_gameState.m_cameraAngle += 24.f;
                     }),
                     CCDelayTime::create(0.016f),
                     nullptr
                 ), 15
             );
+            rotateAction->setTag(-10429);
             editor->runAction(rotateAction);
         }
 	});

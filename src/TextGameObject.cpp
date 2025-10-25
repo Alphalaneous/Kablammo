@@ -30,13 +30,13 @@ void MyTextGameObject::setupKablammo() {
 
             addChild(fields->m_kablammoObject);
 
-            queueInMainThread([obj = Ref(fields->m_kablammoObject)] {
+            queueInMainThread([] {
                 if (auto editor = LevelEditorLayer::get()) {
                     editor->m_editorUI->deselectAll();
                 }
-                obj->playFuse();
             });
 
+            fields->m_kablammoObject->playFuse();
             fields->m_kablammoObject->prepareExplosion();
         }
     }

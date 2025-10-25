@@ -11,6 +11,7 @@ class $modify(MyEditorUI, EditorUI) {
 
 	struct Fields {
 		BoomLayer* m_boomLayer;
+		std::set<GameObject*> m_objectsToRemove;
 	};
 
 	static MyEditorUI* get();
@@ -19,4 +20,6 @@ class $modify(MyEditorUI, EditorUI) {
 	void reloadButtonBar(EditButtonBar* buttonBar);
 	void createMoveMenu();
 	void onKablammo(CCObject* sender);
+	void removeUpdate(float dt);
+	void addObjectToDelete(GameObject* object);
 };

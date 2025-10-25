@@ -26,9 +26,24 @@ bool MyEditorUI::init(LevelEditorLayer* lel) {
     m_fields->m_boomLayer = BoomLayer::create(m_toolbarHeight);
     addChild(m_fields->m_boomLayer);
 
+    schedule(schedule_selector(MyEditorUI::removeUpdate));
+    
     return true;
 }
 
+void MyEditorUI::addObjectToDelete(GameObject* object) {
+    m_fields->m_objectsToRemove.insert(object);
+}
+
+void MyEditorUI::removeUpdate(float dt) {
+    for (auto object : m_fields->m_objectsToRemove) {
+        if (!object->getGroupDisabled()) {
+            object->stopAllActions();
+            m_editorLayer->removeObject(object, false);
+        }
+    }
+    m_fields->m_objectsToRemove.clear();
+};
 
 void MyEditorUI::onKablammo(CCObject* sender) {
     auto fields = m_fields.self();

@@ -1,4 +1,5 @@
 #include "KablammoObject.hpp"
+#include "EditorUI.hpp"
 #include "Utils.hpp"
 #include "Shake.hpp"
 
@@ -162,9 +163,16 @@ CCRect KablammoObject::getWorldBoundingBox() {
     return m_worldBoundingBox;
 }
 
+void KablammoObject::safeDeleteObject(LevelEditorLayer* editor, GameObject* object) {
+	if (!LevelEditorLayer::get()) return;
+
+    MyEditorUI::get()->addObjectToDelete(object);
+}
 
 // this code is AI assisted
 void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object, const CCPoint& explosionCenter) {
+	if (!LevelEditorLayer::get() || object->getGroupDisabled()) return;
+
     auto objectsArray = CCArray::create();
     auto newObject = editor->m_editorUI->spriteFromObjectString(
         object->getSaveString(editor), false, false, 1, objectsArray, nullptr, nullptr
@@ -228,12 +236,7 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
         ));
     }
 
-    queueInMainThread([object = Ref(object), editor = Ref(editor)] {
-        if (object) {
-            object->stopAllActions();
-            editor->removeObject(object, false);
-        }
-    });
+    safeDeleteObject(editor, object);
 }
 
 // yoinked and modified from eclipse with permission, just grabs objects from visible section, my changes add distance and shape checks
@@ -280,7 +283,7 @@ void KablammoObject::forEachObjectInRadius(GJBaseGameLayer* gjbgl, std::function
             int sectionSize = gjbgl->m_sectionSizes[i]->at(j);
             for (int k = 0; k < sectionSize; ++k) {
                 auto obj = section->at(k);
-                if (!obj) continue;
+                if (!obj || obj->getGroupDisabled()) continue;
 
                 auto pos = obj->getPosition();
                 float dx = pos.x - centerPos.x;
