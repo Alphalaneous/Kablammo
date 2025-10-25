@@ -1,3 +1,7 @@
+# 1.0.3
+- Performance Improvements
+- Bug Fixes
+
 # 1.0.2
 - Fix more crashes
 

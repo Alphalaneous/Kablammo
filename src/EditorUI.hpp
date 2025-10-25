@@ -12,6 +12,7 @@ class $modify(MyEditorUI, EditorUI) {
 	struct Fields {
 		BoomLayer* m_boomLayer;
 		std::set<GameObject*> m_objectsToRemove;
+		int m_fragmentsVisible = 0;
 	};
 
 	static MyEditorUI* get();
@@ -22,4 +23,7 @@ class $modify(MyEditorUI, EditorUI) {
 	void onKablammo(CCObject* sender);
 	void removeUpdate(float dt);
 	void addObjectToDelete(GameObject* object);
+	void incrementFragmentsVisible();
+	void decrementFragmentsVisible();
+	bool canAddMoreFragments();
 };

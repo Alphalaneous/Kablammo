@@ -20,6 +20,18 @@ void MyEditorUI::createMoveMenu() {
     reloadButtonBar(m_editButtonBar);
 }
 
+void MyEditorUI::incrementFragmentsVisible() {
+    m_fields->m_fragmentsVisible += 1;
+}
+
+void MyEditorUI::decrementFragmentsVisible() {
+    m_fields->m_fragmentsVisible -= 1;
+}
+
+bool MyEditorUI::canAddMoreFragments() {
+    return m_fields->m_fragmentsVisible <= 64;
+}
+
 bool MyEditorUI::init(LevelEditorLayer* lel) {
     if (!EditorUI::init(lel)) return false;
 

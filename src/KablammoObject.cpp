@@ -169,9 +169,11 @@ void KablammoObject::safeDeleteObject(LevelEditorLayer* editor, GameObject* obje
     MyEditorUI::get()->addObjectToDelete(object);
 }
 
-// this code is AI assisted
 void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object, const CCPoint& explosionCenter) {
 	if (!LevelEditorLayer::get() || object->getGroupDisabled()) return;
+
+    auto editorUI = MyEditorUI::get();
+    if (!editorUI->canAddMoreFragments()) return;
 
     auto objectsArray = CCArray::create();
     auto newObject = editor->m_editorUI->spriteFromObjectString(
@@ -179,37 +181,36 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
     );
     editor->updateObjectColors(objectsArray);
 
-    const auto size = newObject->getScaledContentSize();
+    auto size = newObject->getScaledContentSize();
     newObject->setPosition(size / 2);
     newObject->setScaleX(object->getScaleX());
     newObject->setScaleY(object->getScaleY());
-
+    
     auto renderTexture = CCRenderTexture::create(size.width, size.height);
     renderTexture->beginWithClear(0, 0, 0, 0);
     newObject->visit();
     renderTexture->end();
     auto texture = renderTexture->getSprite()->getTexture();
 
-    const float scaleX = object->getScaleX() / object->m_pixelScaleX;
-    const float scaleY = object->getScaleY() / object->m_pixelScaleY;
-    const auto scaledSize = object->getScaledContentSize();
-    const float area = (scaledSize.width / object->m_pixelScaleX) * (scaledSize.height / object->m_pixelScaleY);
-    const int baseFragments = 6;
-    const int numFragments = std::max(baseFragments, static_cast<int>(baseFragments * (area / 900.f)));
+    auto scaledSize = object->getScaledContentSize();
+    float area = scaledSize.width * scaledSize.height;
+    int baseFragments = 6;
+    int numFragments = std::min(std::max(baseFragments, static_cast<int>(baseFragments * (area / 900.f))), 16);
 
-    const float fragFraction = 0.3f;
-    const float maxDist = static_cast<CCPoint>(size).getLength() / 2.f;
+    float fragFraction = 0.3f;
+    float maxDist = static_cast<CCPoint>(size).getLength() / 2.f;
 
     for (int i = 0; i < numFragments; ++i) {
-        const float w = size.width * fragFraction;
-        const float h = size.height * fragFraction;
-        const float x = kablammo_utils::randomInRange(0, 1) * (size.width - w);
-        const float y = kablammo_utils::randomInRange(0, 1) * (size.height - h);
+        if (!editorUI->canAddMoreFragments()) break;
+        editorUI->incrementFragmentsVisible();
+        
+        float w = size.width * fragFraction;
+        float h = size.height * fragFraction;
+        float x = kablammo_utils::randomInRange(0, 1) * (size.width - w);
+        float y = kablammo_utils::randomInRange(0, 1) * (size.height - h);
 
         auto frag = CCSprite::createWithTexture(texture, {x, y, w, h});
         frag->setPosition(object->getPosition() + CCPoint(x + w/2 - size.width/2, y + h/2 - size.height/2));
-        frag->setScaleX(scaleX);
-        frag->setScaleY(scaleY);
         frag->setRotation(object->getRotation());
         editor->m_objectLayer->addChild(frag);
 
@@ -231,11 +232,15 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
                 CCRotateBy::create(0.5f, rotSpeed),
                 nullptr
             ),
-            CCCallFuncN::create(frag, callfuncN_selector(CCNode::removeFromParent)),
+            CallFuncExt::create([frag] {
+                frag->removeFromParent();
+                if (auto editorUI = MyEditorUI::get()) {
+                    editorUI->decrementFragmentsVisible();
+                }
+            }),
             nullptr
         ));
     }
-
     safeDeleteObject(editor, object);
 }
 
