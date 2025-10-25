@@ -173,7 +173,7 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
 	if (!LevelEditorLayer::get() || object->getGroupDisabled()) return;
 
     auto editorUI = MyEditorUI::get();
-    if (!editorUI->canAddMoreFragments()) return;
+    if (!editorUI->canAddMoreFragments()) return safeDeleteObject(editor, object);
 
     auto objectsArray = CCArray::create();
     auto newObject = editor->m_editorUI->spriteFromObjectString(
