@@ -72,21 +72,6 @@ namespace kablammo_utils {
 		return ss.str();
 	}
 
-	static inline void fixObjectPosition(GameObject* object, LevelEditorLayer* editor) {
-		if (!EditorUI::get()) return;
-		if (object->getGroupDisabled()) return;
-		object->updateStartValues();
-		editor->reorderObjectSection(object);
-		editor->m_drawGridLayer->m_sortEffects = true;
-		if (object->m_dontIgnoreDuration) {
-			static_cast<EffectGameObject*>(object)->m_endPosition = CCPoint{0, 0};
-		}
-
-		if (object->isSpeedObject() || object->canReverse()) {
-			editor->m_drawGridLayer->m_updateSpeedObjects = true;
-		}
-	}
-
 	static inline bool pointInPolygon(const std::vector<std::pair<float, float>>& poly, float x, float y) {
 		bool inside = false;
 		size_t n = poly.size();

@@ -73,7 +73,6 @@ bool KablammoObject::init(const KablammoObjectData& data, GameObject* object) {
     return true;
 }
 
-
 void KablammoObject::playFuse() {
     if (!m_object) return;
 	FMODAudioEngine::get()->playEffectAdvanced(m_data.fuseSound, 1.f, 1.f, 1.f, 1.f, false, false, 0, m_data.explosionFuse * 1000, 0, 0, false, 0, false, false, 0, 0, 0.f, 0);	
@@ -82,7 +81,6 @@ void KablammoObject::playFuse() {
 void KablammoObject::playExplosion() {
     if (!m_object) return;
     FMODAudioEngine::get()->playEffectAdvanced(m_data.explosionSound, 1.f, 0.f, 2.f, 0.f, false, false, 0, 0, 0, 0, false, 0, false, true, 0, 0, 0.f, 0);
-
 }
 
 void KablammoObject::ensureRemoval(float dt) {
@@ -95,11 +93,16 @@ void KablammoObject::ensureRemoval(float dt) {
     }
 }
 
+void KablammoObject::fixObjectPosition(GameObject* object, LevelEditorLayer* editor) {
+    if (!EditorUI::get()) return;
+    if (object->getGroupDisabled()) return;
+    MyEditorUI::get()->addObjectToFix(object);
+}
+
 void KablammoObject::explode(float dt) {
     if (!m_object) return;
     if (auto editor = LevelEditorLayer::get()) {
         m_blewUp = true;
-        editor->m_editorUI->deselectAll();
 
         KablammoObject::forEachObjectInRadius(editor, [editor, this](GameObject* object, float distance) {
             if (m_data.objectModifier) m_data.objectModifier(editor, this, distance, object);
@@ -113,7 +116,7 @@ void KablammoObject::explode(float dt) {
         
         editor->m_editorUI->deselectAll();
         editor->m_objectLayer->runAction(Shake::create(0.2f, 2));
-        editor->removeObject(m_object, false);
+        safeDeleteObject(editor, m_object);
     }
     schedule(schedule_selector(KablammoObject::ensureRemoval));
 }

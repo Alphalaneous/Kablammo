@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Geode/Geode.hpp>
+#include "Geode/cocos/cocoa/CCObject.h"
 #include "Geode/cocos/label_nodes/CCLabelBMFont.h"
 #include "KablammoObject.hpp"
 
@@ -20,7 +21,7 @@ public:
 
     bool init(float heightOffset);
     void show();
-    void hide();
+    void hide(CCObject* sender = nullptr);
     void goToPage(int page);
 
     std::vector<KablammoObject*> m_kablammoObjects;

@@ -1,3 +1,7 @@
+# 1.0.5
+- Implement real crash fix when deleting objects that get moved/rotated/deleted
+- Add close button to popup itself
+
 # 1.0.4
 - Fix a crash when deleting moving/rotating objects
   - Temporary fix, will disable movement if no longer visible in any way.

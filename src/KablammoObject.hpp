@@ -60,13 +60,12 @@ public:
     bool m_setWorldBoundingBox;
     bool m_blewUp;
 
-
     // to the judges, I am making it like this cuz I might make it an api at some point
     static geode::Result<> registerObject(const KablammoObjectData& data);
     static bool identifierExists(const std::string& identifier);
     static geode::Result<const KablammoObjectData&> dataFromIdentifier(const std::string& identifier);
     static void safeDeleteObject(LevelEditorLayer* editor, GameObject* object);
-    
+    static void fixObjectPosition(GameObject* object, LevelEditorLayer* editor);
     static void explodeObject(LevelEditorLayer* editor, GameObject* object, const CCPoint& explosionCenter);
     static void forEachObjectInRadius(GJBaseGameLayer* gjbgl, std::function<void(GameObject*, float distance)> const& callback, std::function<bool(GameObject*)> const& skipped, GameObject* center, float radius, bool skipRadiusCheck = false, SearchShape searchShape = SearchShape::Circle);
 };

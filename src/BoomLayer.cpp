@@ -76,6 +76,21 @@ bool BoomLayer::init(float heightOffset) {
 
     addChild(navMenu);
 
+    auto closeMenu = CCMenu::create();
+    closeMenu->ignoreAnchorPointForPosition(false);
+    closeMenu->setContentSize({15, getContentHeight()});
+    closeMenu->setAnchorPoint({0, 0.5f});
+    closeMenu->setPosition({getContentWidth() - 4, getContentHeight()/2});
+
+    addChild(closeMenu);
+
+    auto closeArrow = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
+    closeArrow->setScale(0.4f);
+    auto closeBtn = CCMenuItemSpriteExtra::create(closeArrow, this, menu_selector(BoomLayer::hide));
+
+    closeBtn->setPosition(closeMenu->getContentSize()/2);
+    closeMenu->addChild(closeBtn);
+
     auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     prevSpr->setScale(0.5f);
     auto prevBtn = CCMenuItemSpriteExtra::create(prevSpr, this, menu_selector(BoomLayer::onPrevPage));
@@ -282,7 +297,7 @@ void BoomLayer::show() {
 
 }
 
-void BoomLayer::hide() {
+void BoomLayer::hide(CCObject* sender) {
 
     auto winSize = CCDirector::get()->getWinSize();
 

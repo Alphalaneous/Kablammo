@@ -38,7 +38,7 @@ bool MyEditorUI::init(LevelEditorLayer* lel) {
     m_fields->m_boomLayer = BoomLayer::create(m_toolbarHeight);
     addChild(m_fields->m_boomLayer);
 
-    schedule(schedule_selector(MyEditorUI::removeUpdate));
+    schedule(schedule_selector(MyEditorUI::objectUpdate));
     
     return true;
 }
@@ -47,10 +47,49 @@ void MyEditorUI::addObjectToDelete(GameObject* object) {
     m_fields->m_objectsToRemove.insert(object);
 }
 
-void MyEditorUI::removeUpdate(float dt) {
+bool MyEditorUI::hasObjectToDelete(GameObject* object) {
+    return m_fields->m_objectsToRemove.contains(object);
+}
+
+void MyEditorUI::removeObjectToDelete(GameObject* object) {
+    m_fields->m_objectsToRemove.erase(object);
+}
+
+void MyEditorUI::addObjectToFix(GameObject* object) {
+    m_fields->m_objectsToFix.insert(object);
+}
+
+void MyEditorUI::removeObjectToFix(GameObject* object) {
+    m_fields->m_objectsToFix.erase(object);
+}
+
+void MyEditorUI::objectUpdate(float dt) {
+
+    for (auto object : m_fields->m_objectsToFix) {
+        if (!object->getGroupDisabled()) {
+            object->updateStartValues();
+            m_editorLayer->reorderObjectSection(object);
+            m_editorLayer->m_drawGridLayer->m_sortEffects = true;
+            if (object->m_dontIgnoreDuration) {
+                static_cast<EffectGameObject*>(object)->m_endPosition = CCPoint{0, 0};
+            }
+            if (object->isSpeedObject() || object->canReverse()) {
+                m_editorLayer->m_drawGridLayer->m_updateSpeedObjects = true;
+            }
+        }
+    }
+    m_fields->m_objectsToFix.clear();
+
     for (auto object : m_fields->m_objectsToRemove) {
         if (!object->getGroupDisabled()) {
             object->stopAllActions();
+            if (object == m_selectedObject) m_selectedObject = nullptr;
+            for (auto selectedObject : CCArrayExt<GameObject*>(m_selectedObjects)) {
+                if (selectedObject == object) {
+                    m_selectedObjects->removeObject(selectedObject);
+                    break;
+                }
+            }
             m_editorLayer->removeObject(object, false);
         }
     }

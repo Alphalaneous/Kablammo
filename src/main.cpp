@@ -1,7 +1,7 @@
 #include "EditorUI.hpp"
 #include "KablammoObject.hpp"
 #include "Utils.hpp"
-#include <Geode/modify/GameObject.hpp>
+#include <Geode/modify/LevelEditorLayer.hpp>
 #include <Geode/modify/EditorPauseLayer.hpp>
 
 class $modify(EditorPauseLayer) {
@@ -34,14 +34,14 @@ class $modify(EditorPauseLayer) {
     }
 };
 
-// evil crash fix, setVisible is only ever called on GameObject when it is deleted or removed from the visible section, setOpacity is what is used to set it invisible everywhere else
-// I will eventually add a more robust fix
-class $modify(GameObject) {
-    void setVisible(bool visible) {
-        if (!visible && EditorUI::get()) {
-            stopAllActions();
+class $modify(LevelEditorLayer) {
+    void removeSpecial(GameObject* p0) {
+        if (auto editor = MyEditorUI::get()) {
+            p0->stopAllActions();
+            editor->removeObjectToFix(p0);
+            editor->removeObjectToDelete(p0);
         }
-        GameObject::setVisible(visible);
+        LevelEditorLayer::removeSpecial(p0);
     }
 };
 
@@ -125,7 +125,7 @@ static void blackHole(LevelEditorLayer* editor, KablammoObject* kablammoObj, flo
                 float deltaX = nx * radial + tx * spiralStrength;
                 float deltaY = ny * radial + ty * spiralStrength;
                 object->setPosition({pos.x + deltaX, pos.y + deltaY});
-                kablammo_utils::fixObjectPosition(object, editor);
+                KablammoObject::fixObjectPosition(object, editor);
             }),
             CCDelayTime::create(0.016f),
             nullptr
@@ -169,7 +169,7 @@ static void spread(LevelEditorLayer* editor, KablammoObject* kablammoObj, float 
     object->runAction(CCSequence::create(
         CCEaseIn::create(CCMoveBy::create(0.1f + kablammo_utils::randomInRange(0.f, 0.3f) * 0.1f, offset), 0.2f),
         CallFuncExt::create([object, editor] {
-            kablammo_utils::fixObjectPosition(object, editor);
+            KablammoObject::fixObjectPosition(object, editor);
         }),
         nullptr
     ));
@@ -201,7 +201,7 @@ static void scaleSpread(LevelEditorLayer* editor, KablammoObject* kablammoObj, f
             if (!LevelEditorLayer::get()) return;
             object->m_scaleX = object->getScaleX();
             object->m_scaleY = object->getScaleY();
-            kablammo_utils::fixObjectPosition(object, editor);
+            KablammoObject::fixObjectPosition(object, editor);
         }),
         nullptr
     ));
@@ -262,7 +262,7 @@ $execute {
         .objectModifier = [] (LevelEditorLayer* editor, KablammoObject* kablammoObj, float distance, GameObject* object) {
             object->setPositionX(object->getPositionX() + kablammo_utils::randomInRange(-2.f, 2.f));
             object->setPositionY(object->getPositionY() + kablammo_utils::randomInRange(-2.f, 2.f));
-            kablammo_utils::fixObjectPosition(object, editor);
+            KablammoObject::fixObjectPosition(object, editor);
         }
 	});
 
@@ -281,7 +281,7 @@ $execute {
             // ts pmo, why are these separate???
             object->m_scaleX = object->getScaleX();
             object->m_scaleY = object->getScaleY();
-            kablammo_utils::fixObjectPosition(object, editor);
+            KablammoObject::fixObjectPosition(object, editor);
         }
 	});
 
@@ -332,7 +332,7 @@ $execute {
                         int xOffset = kablammo_utils::randomInRange(-1, 1) * 30;
                         int yOffset = kablammo_utils::randomInRange(-1, 1) * 30;
                         object->setPosition({object->getPositionX() + xOffset, object->getPositionY() + yOffset});
-                        kablammo_utils::fixObjectPosition(object, editor);
+                        KablammoObject::fixObjectPosition(object, editor);
                     }),
                     CCDelayTime::create(0.25),
                     nullptr
