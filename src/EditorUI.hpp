@@ -29,6 +29,7 @@ class $modify(MyEditorUI, EditorUI) {
 	void removeObjectToDelete(GameObject* object);
 	void addObjectToFix(GameObject* object);
 	void removeObjectToFix(GameObject* object);
+	void onPlaytest(CCObject* sender);
 	void incrementFragmentsVisible();
 	void decrementFragmentsVisible();
 	bool canAddMoreFragments();

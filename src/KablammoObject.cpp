@@ -102,20 +102,22 @@ void KablammoObject::fixObjectPosition(GameObject* object, LevelEditorLayer* edi
 void KablammoObject::explode(float dt) {
     if (!m_object) return;
     if (auto editor = LevelEditorLayer::get()) {
-        m_blewUp = true;
+        if (editor->m_playbackMode != PlaybackMode::Playing) {
+            m_blewUp = true;
 
-        KablammoObject::forEachObjectInRadius(editor, [editor, this](GameObject* object, float distance) {
-            if (m_data.objectModifier) m_data.objectModifier(editor, this, distance, object);
-        }, [](GameObject* obj) -> bool {
-            return obj->getUserObject("kablammo-enabled");
-        }, m_object, m_data.explosionRadius * 30, m_data.skipRadiusCheck, m_data.searchShape);
+            KablammoObject::forEachObjectInRadius(editor, [editor, this](GameObject* object, float distance) {
+                if (m_data.objectModifier) m_data.objectModifier(editor, this, distance, object);
+            }, [](GameObject* obj) -> bool {
+                return obj->getUserObject("kablammo-enabled");
+            }, m_object, m_data.explosionRadius * 30, m_data.skipRadiusCheck, m_data.searchShape);
 
-        if (m_data.onExplode) m_data.onExplode(editor, this);
+            if (m_data.onExplode) m_data.onExplode(editor, this);
 
-        playExplosion();
-        
-        editor->m_editorUI->deselectAll();
-        editor->m_objectLayer->runAction(Shake::create(0.2f, 2));
+            playExplosion();
+            
+            editor->m_editorUI->deselectAll();
+            editor->m_objectLayer->runAction(Shake::create(0.2f, 2));
+        }
         safeDeleteObject(editor, m_object);
     }
     schedule(schedule_selector(KablammoObject::ensureRemoval));

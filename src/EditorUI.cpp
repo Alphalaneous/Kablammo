@@ -20,6 +20,12 @@ void MyEditorUI::createMoveMenu() {
     reloadButtonBar(m_editButtonBar);
 }
 
+void MyEditorUI::onPlaytest(CCObject* sender) {
+    auto fields = m_fields.self();
+    if (fields->m_boomLayer) fields->m_boomLayer->hide();
+    EditorUI::onPlaytest(sender);
+}
+
 void MyEditorUI::incrementFragmentsVisible() {
     m_fields->m_fragmentsVisible += 1;
 }
@@ -34,9 +40,10 @@ bool MyEditorUI::canAddMoreFragments() {
 
 bool MyEditorUI::init(LevelEditorLayer* lel) {
     if (!EditorUI::init(lel)) return false;
+    auto fields = m_fields.self();
 
-    m_fields->m_boomLayer = BoomLayer::create(m_toolbarHeight);
-    addChild(m_fields->m_boomLayer);
+    fields->m_boomLayer = BoomLayer::create(m_toolbarHeight);
+    addChild(fields->m_boomLayer);
 
     schedule(schedule_selector(MyEditorUI::objectUpdate));
     
@@ -64,8 +71,9 @@ void MyEditorUI::removeObjectToFix(GameObject* object) {
 }
 
 void MyEditorUI::objectUpdate(float dt) {
+    auto fields = m_fields.self();
 
-    for (auto object : m_fields->m_objectsToFix) {
+    for (auto object : fields->m_objectsToFix) {
         if (!object->getGroupDisabled()) {
             object->updateStartValues();
             m_editorLayer->reorderObjectSection(object);
@@ -78,11 +86,11 @@ void MyEditorUI::objectUpdate(float dt) {
             }
         }
     }
-    m_fields->m_objectsToFix.clear();
+    fields->m_objectsToFix.clear();
 
     std::vector<Ref<GameObject>> objectsRemoved;
 
-    for (auto object : m_fields->m_objectsToRemove) {
+    for (auto object : fields->m_objectsToRemove) {
         if (!object->getGroupDisabled()) {
             object->stopAllActions();
             if (object == m_selectedObject) m_selectedObject = nullptr;
@@ -102,16 +110,16 @@ void MyEditorUI::objectUpdate(float dt) {
         m_editorLayer->removeObject(object, false);
     }
 
-    m_fields->m_objectsToRemove.clear();
+    fields->m_objectsToRemove.clear();
 };
 
 void MyEditorUI::onKablammo(CCObject* sender) {
     auto fields = m_fields.self();
 
     if (fields->m_boomLayer->m_showing) {
-        m_fields->m_boomLayer->hide();
+        fields->m_boomLayer->hide();
     }
     else {
-        m_fields->m_boomLayer->show();
+        fields->m_boomLayer->show();
     }
 }

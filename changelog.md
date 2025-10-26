@@ -1,3 +1,6 @@
+# 1.0.7
+- Fix a crash when playtesting while a bomb is going off
+
 # 1.0.6
 - Fix another crash oh my. This bomb is really blowing itself up
 
