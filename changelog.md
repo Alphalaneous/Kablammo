@@ -1,3 +1,6 @@
+# 1.0.6
+- Fix another crash oh my. This bomb is really blowing itself up
+
 # 1.0.5
 - Implement real crash fix when deleting objects that get moved/rotated/deleted
 - Add close button to popup itself

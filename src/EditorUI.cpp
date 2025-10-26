@@ -84,12 +84,14 @@ void MyEditorUI::objectUpdate(float dt) {
         if (!object->getGroupDisabled()) {
             object->stopAllActions();
             if (object == m_selectedObject) m_selectedObject = nullptr;
+            GameObject* objectToRemove = nullptr;
             for (auto selectedObject : CCArrayExt<GameObject*>(m_selectedObjects)) {
                 if (selectedObject == object) {
-                    m_selectedObjects->removeObject(selectedObject);
+                    objectToRemove = selectedObject;
                     break;
                 }
             }
+            if (objectToRemove) m_selectedObjects->removeObject(objectToRemove);
             m_editorLayer->removeObject(object, false);
         }
     }
