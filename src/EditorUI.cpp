@@ -80,6 +80,8 @@ void MyEditorUI::objectUpdate(float dt) {
     }
     m_fields->m_objectsToFix.clear();
 
+    std::vector<Ref<GameObject>> objectsRemoved;
+
     for (auto object : m_fields->m_objectsToRemove) {
         if (!object->getGroupDisabled()) {
             object->stopAllActions();
@@ -92,9 +94,14 @@ void MyEditorUI::objectUpdate(float dt) {
                 }
             }
             if (objectToRemove) m_selectedObjects->removeObject(objectToRemove);
-            m_editorLayer->removeObject(object, false);
+            objectsRemoved.push_back(object);
         }
     }
+
+    for (auto object : objectsRemoved) {
+        m_editorLayer->removeObject(object, false);
+    }
+
     m_fields->m_objectsToRemove.clear();
 };
 
