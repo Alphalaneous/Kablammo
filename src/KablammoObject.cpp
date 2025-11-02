@@ -251,8 +251,8 @@ void KablammoObject::explodeObject(LevelEditorLayer* editor, GameObject* object,
 }
 
 // yoinked and modified from eclipse with permission, just grabs objects from visible section, my changes add distance and shape checks
-void KablammoObject::forEachObjectInRadius(GJBaseGameLayer* gjbgl, std::function<void(GameObject*, float distance)> const& callback, std::function<bool(GameObject*)> const& skipped, GameObject* center, float radius, bool skipRadiusCheck, SearchShape searchShape) {
-    if (!gjbgl || !center) return;
+void KablammoObject::forEachObjectInRadius(LevelEditorLayer* editor, std::function<void(GameObject*, float distance)> const& callback, std::function<bool(GameObject*)> const& skipped, GameObject* center, float radius, bool skipRadiusCheck, SearchShape searchShape) {
+    if (!editor || !center) return;
 
     auto centerPos = center->getPosition();
     float radiusSq = radius * radius;
@@ -281,20 +281,27 @@ void KablammoObject::forEachObjectInRadius(GJBaseGameLayer* gjbgl, std::function
         default: break;
     }
 
-    int sectionCount = gjbgl->m_sections.empty() ? -1 : static_cast<int>(gjbgl->m_sections.size());
-    for (int i = gjbgl->m_leftSectionIndex; i <= gjbgl->m_rightSectionIndex && i < sectionCount; ++i) {
-        auto leftSection = gjbgl->m_sections[i];
+    int sectionCount = editor->m_sections.empty() ? -1 : static_cast<int>(editor->m_sections.size());
+    for (int i = editor->m_leftSectionIndex; i <= editor->m_rightSectionIndex && i < sectionCount; ++i) {
+        auto leftSection = editor->m_sections[i];
         if (!leftSection) continue;
 
         int leftSectionSize = static_cast<int>(leftSection->size());
-        for (int j = gjbgl->m_bottomSectionIndex; j <= gjbgl->m_topSectionIndex && j < leftSectionSize; ++j) {
+        for (int j = editor->m_bottomSectionIndex; j <= editor->m_topSectionIndex && j < leftSectionSize; ++j) {
             auto section = leftSection->at(j);
             if (!section) continue;
 
-            int sectionSize = gjbgl->m_sectionSizes[i]->at(j);
+            int sectionSize = editor->m_sectionSizes[i]->at(j);
             for (int k = 0; k < sectionSize; ++k) {
                 auto obj = section->at(k);
                 if (!obj || obj->getGroupDisabled()) continue;
+
+                int currentLayer = editor->m_currentLayer;
+
+                bool isOnCurrentEditorLayer1 = obj->m_editorLayer == editor->m_currentLayer;
+                bool isOnCurrentEditorLayer2 = (obj->m_editorLayer2 == editor->m_currentLayer) && obj->m_editorLayer2 != 0;
+
+                if (!(currentLayer == -1 || (isOnCurrentEditorLayer1 || isOnCurrentEditorLayer2))) continue;
 
                 auto pos = obj->getPosition();
                 float dx = pos.x - centerPos.x;

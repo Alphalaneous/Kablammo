@@ -1,3 +1,6 @@
+# 1.0.8
+- Respect Object Layers
+
 # 1.0.7
 - Fix a crash when playtesting while a bomb is going off
 
