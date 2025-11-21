@@ -43,6 +43,7 @@ bool MyEditorUI::init(LevelEditorLayer* lel) {
     auto fields = m_fields.self();
 
     fields->m_boomLayer = BoomLayer::create(m_toolbarHeight);
+    fields->m_boomLayer->setTouchPriority(-500);
     addChild(fields->m_boomLayer);
 
     schedule(schedule_selector(MyEditorUI::objectUpdate));

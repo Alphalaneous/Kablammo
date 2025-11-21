@@ -1,3 +1,6 @@
+# 1.0.9
+- Remove Better Touch Prio Dependency
+
 # 1.0.8
 - Respect Object Layers
 
