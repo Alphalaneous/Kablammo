@@ -1,3 +1,6 @@
+# 1.0.10
+- Fix arrow buttons not working
+
 # 1.0.9
 - Remove Better Touch Prio Dependency
 

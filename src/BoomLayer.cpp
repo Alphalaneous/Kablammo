@@ -64,47 +64,47 @@ bool BoomLayer::init(float heightOffset) {
 
     addChild(m_row2);
     
-    auto navMenu = CCMenu::create();
-    navMenu->setContentSize({getContentWidth(), 30});
-    navMenu->setPosition({getContentWidth()/2, 10});
-    navMenu->setAnchorPoint({0.5f, 0.f});
-    navMenu->ignoreAnchorPointForPosition(false);
+    m_pageButtons = CCMenu::create();
+    m_pageButtons->setContentSize({getContentWidth(), 30});
+    m_pageButtons->setPosition({getContentWidth()/2, 10});
+    m_pageButtons->setAnchorPoint({0.5f, 0.f});
+    m_pageButtons->ignoreAnchorPointForPosition(false);
 
     if (KablammoObject::s_kablammoObjects.size() <= 10) {
-        navMenu->setVisible(false);
+        m_pageButtons->setVisible(false);
     }
 
-    addChild(navMenu);
+    addChild(m_pageButtons);
 
-    auto closeMenu = CCMenu::create();
-    closeMenu->ignoreAnchorPointForPosition(false);
-    closeMenu->setContentSize({15, getContentHeight()});
-    closeMenu->setAnchorPoint({0, 0.5f});
-    closeMenu->setPosition({getContentWidth() - 4, getContentHeight()/2});
+    m_closeMenu = CCMenu::create();
+    m_closeMenu->ignoreAnchorPointForPosition(false);
+    m_closeMenu->setContentSize({15, getContentHeight()});
+    m_closeMenu->setAnchorPoint({0, 0.5f});
+    m_closeMenu->setPosition({getContentWidth() - 4, getContentHeight()/2});
 
-    addChild(closeMenu);
+    addChild(m_closeMenu);
 
     auto closeArrow = CCSprite::createWithSpriteFrameName("navArrowBtn_001.png");
     closeArrow->setScale(0.4f);
     auto closeBtn = CCMenuItemSpriteExtra::create(closeArrow, this, menu_selector(BoomLayer::hide));
 
-    closeBtn->setPosition(closeMenu->getContentSize()/2);
-    closeMenu->addChild(closeBtn);
+    closeBtn->setPosition(m_closeMenu->getContentSize()/2);
+    m_closeMenu->addChild(closeBtn);
 
     auto prevSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     prevSpr->setScale(0.5f);
     auto prevBtn = CCMenuItemSpriteExtra::create(prevSpr, this, menu_selector(BoomLayer::onPrevPage));
-    prevBtn->setPosition({getContentWidth()/2 - 30, navMenu->getContentHeight()/2});
+    prevBtn->setPosition({getContentWidth()/2 - 30, m_pageButtons->getContentHeight()/2});
     
-    navMenu->addChild(prevBtn);
+    m_pageButtons->addChild(prevBtn);
 
     auto nextSpr = CCSprite::createWithSpriteFrameName("GJ_arrow_02_001.png");
     nextSpr->setScale(0.5f);
     nextSpr->setFlipX(true);
     auto nextBtn = CCMenuItemSpriteExtra::create(nextSpr, this, menu_selector(BoomLayer::onNextPage));
-    nextBtn->setPosition({getContentWidth()/2 + 30, navMenu->getContentHeight()/2});
+    nextBtn->setPosition({getContentWidth()/2 + 30, m_pageButtons->getContentHeight()/2});
     
-    navMenu->addChild(nextBtn);
+    m_pageButtons->addChild(nextBtn);
 
     int totalObjects = static_cast<int>(KablammoObject::s_kablammoObjects.size());
     int totalPages = (totalObjects + 9) / 10;
@@ -174,10 +174,22 @@ void BoomLayer::registerWithTouchDispatcher() {
     CCDirector::get()
         ->getTouchDispatcher()
         ->addTargetedDelegate(this, getTouchPriority(), true);
+
+    m_pageButtons->setTouchPriority(getTouchPriority() - 1);
+    m_closeMenu->setTouchPriority(getTouchPriority() - 1);
+}
+
+bool isTouchInsideNode(CCNode* node, CCTouch* touch) {
+    if (!node || !touch) return false;
+
+    CCPoint touchLocation = node->getParent()->convertTouchToNodeSpace(touch);
+    CCRect nodeRect = node->boundingBox();
+
+    return nodeRect.containsPoint(touchLocation);
 }
 
 bool BoomLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent) {
-    if (!boundingBox().containsPoint(pTouch->getLocation())) return false;
+    if (!isTouchInsideNode(this, pTouch)) return false;
 
     bool touchedObject = false;
 

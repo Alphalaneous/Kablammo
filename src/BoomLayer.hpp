@@ -35,5 +35,7 @@ public:
     MDTextArea* m_descriptionArea;
     CCNode* m_row1;
     CCNode* m_row2;
+    CCMenu* m_pageButtons;
+    CCMenu* m_closeMenu;
     CCLabelBMFont* m_pageLabel;
 };
