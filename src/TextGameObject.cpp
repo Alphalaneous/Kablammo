@@ -13,7 +13,7 @@ void MyTextGameObject::setupKablammo() {
 
     if (pair.first == "kablammo") {
         if (KablammoObject::identifierExists(pair.second)) {
-            m_hasSpecialChild = true;
+            m_addToNodeContainer = true;
 
             fields->m_kablammoObject = KablammoObject::create(pair.second, this);
 
