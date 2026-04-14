@@ -1,3 +1,6 @@
+# 1.0.12
+- Fix jitless iOS crash
+
 # 1.0.11
 - 2.2081 Support
 

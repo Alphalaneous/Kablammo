@@ -18,14 +18,9 @@ class $modify(EditorPauseLayer) {
         }
     }
 
-    void onSaveAndExit(cocos2d::CCObject* sender) {
+    void saveLevel() {
         cleanupActions();
-        EditorPauseLayer::onSaveAndExit(sender);
-    }
-
-    void onSaveAndPlay(cocos2d::CCObject* sender) {
-        cleanupActions();
-        EditorPauseLayer::onSaveAndPlay(sender);
+        EditorPauseLayer::saveLevel();
     }
 
     void onExitNoSave(cocos2d::CCObject* sender) {
