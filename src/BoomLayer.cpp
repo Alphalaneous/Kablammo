@@ -198,13 +198,15 @@ bool BoomLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
         if (childBounds.containsPoint(pTouch->getLocation())) {
             obj->setColor({150, 150, 150});
             m_grabbedObject = obj;
-            m_draggedObject = KablammoObject::create(obj->m_data);
-            m_draggedObject->setVisible(false);
-            m_draggedObject->setScale(0.75f);
-            auto pos = convertToNodeSpace(pTouch->getLocation());
-            m_draggedObject->setPosition(pos);
 
-            addChild(m_draggedObject);
+            auto dragged = KablammoObject::create(obj->m_data);
+            m_draggedObject = dragged;
+            dragged->setVisible(false);
+            dragged->setScale(0.75f);
+            auto pos = convertToNodeSpace(pTouch->getLocation());
+            dragged->setPosition(pos);
+
+            addChild(dragged);
             auto& data = obj->m_data;
 
             std::string radiusText = data.explosionRadius != 0 ? numToString(data.explosionRadius) : "N/A";
@@ -218,17 +220,18 @@ bool BoomLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 
     if (!touchedObject) {
         m_grabbedObject = nullptr;
-        if (m_draggedObject) {
-            m_draggedObject->removeFromParent();
-            m_draggedObject = nullptr;
+        auto dragged = m_draggedObject.lock();
+        if (dragged) {
+            dragged->removeFromParent();
         }
+        m_draggedObject = nullptr;
 
         m_statsArea->setString("N/A\nRadius: <cg>N/A</c>\nFuse: <cg>N/A</c>");
         m_descriptionArea->setString("Click an explosive to view information.");
     }
 
     for (const auto& obj : m_kablammoObjects) {
-        if (obj == m_grabbedObject) continue;
+        if (obj == m_grabbedObject.lock()) continue;
         obj->setColor({255, 255, 255});
     }
 
@@ -236,24 +239,30 @@ bool BoomLayer::ccTouchBegan(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 }
 
 void BoomLayer::ccTouchMoved(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent) {
-    if (m_grabbedObject) {
-        m_grabbedObject->setVisible(false);
+    auto grabbed = m_draggedObject.lock();
+    auto dragged = m_draggedObject.lock();
+
+    if (grabbed) {
+        grabbed->setVisible(false);
     }
-    if (m_draggedObject) {
+    if (dragged) {
         auto pos = convertToNodeSpace(pTouch->getLocation());
-        m_draggedObject->setPosition(pos);
-        m_draggedObject->setVisible(true);
+        dragged->setPosition(pos);
+        dragged->setVisible(true);
     }
 }
 
 void BoomLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent) {
-    if (m_grabbedObject) {
-        m_grabbedObject->setVisible(true);
+    auto grabbed = m_draggedObject.lock();
+    auto dragged = m_draggedObject.lock();
+
+    if (grabbed) {
+        grabbed->setVisible(true);
     }
-    if (m_draggedObject) {
-        m_draggedObject->removeFromParent();
-        m_draggedObject = nullptr;
+    if (dragged) {
+        dragged->removeFromParent();
     }
+    m_draggedObject = nullptr;
 
     if (boundingBox().containsPoint(pTouch->getLocation())) return;
 
@@ -263,8 +272,8 @@ void BoomLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
         float posX = localPosAR.x;
         float posY = localPosAR.y - editorUI->m_toolbarHeight / editorUI->m_positionSlider->getScale();
         
-        if (m_grabbedObject) {
-            std::string obj = fmt::format("1,914,2,{},3,{},21,1011,31,{},24,11", posX, posY, utils::base64::encode(fmt::format("kablammo:{}", m_grabbedObject->m_data.identifier)));
+        if (grabbed) {
+            std::string obj = fmt::format("1,914,2,{},3,{},21,1011,31,{},24,11", posX, posY, utils::base64::encode(fmt::format("kablammo:{}", grabbed->m_data.identifier)));
             editorUI->pasteObjects(obj, true, true);
             editorUI->updateButtons();
             editorUI->updateObjectInfoLabel();
@@ -273,26 +282,30 @@ void BoomLayer::ccTouchEnded(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent)
 }
 
 void BoomLayer::ccTouchCancelled(cocos2d::CCTouch *pTouch, cocos2d::CCEvent *pEvent) {
+    auto grabbed = m_draggedObject.lock();
+    auto dragged = m_draggedObject.lock();
+
     for (const auto& obj : m_kablammoObjects) {
         obj->setColor({255, 255, 255});
     }
-    if (m_grabbedObject) {
-        m_grabbedObject->setVisible(true);
+    if (grabbed) {
+        grabbed->setVisible(true);
     }
-    if (m_draggedObject) {
-        m_draggedObject->removeFromParent();
-        m_draggedObject = nullptr;
+    if (dragged) {
+        dragged->removeFromParent();
     }
+    m_draggedObject = nullptr;
 }
 
 void BoomLayer::show() {
+    auto grabbed = m_draggedObject.lock();
 
     auto winSize = CCDirector::get()->getWinSize();
 
-    if (m_grabbedObject) {
-        m_grabbedObject->setVisible(true);
-        m_grabbedObject = nullptr;
+    if (grabbed) {
+        grabbed->setVisible(true);
     }
+    m_draggedObject = nullptr;
 
     for (const auto& obj : m_kablammoObjects) {
         obj->setColor({255, 255, 255});
@@ -306,11 +319,9 @@ void BoomLayer::show() {
     stopAllActions();
     runAction(ease);
     m_showing = true;
-
 }
 
 void BoomLayer::hide(CCObject* sender) {
-
     auto winSize = CCDirector::get()->getWinSize();
 
     auto moveTo = CCMoveTo::create(0.3f, {winSize.width + 5, m_heightOffset + 5});

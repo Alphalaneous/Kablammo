@@ -9,18 +9,29 @@ class $modify(EditorPauseLayer) {
     void cleanupActions() {
         if (auto editor = LevelEditorLayer::get()) {
             for (auto object : CCArrayExt<GameObject*>(editor->m_objects)) {
-                object->stopAllActions();
+                object->pauseSchedulerAndActions();
             }
         }
         if (auto editorUI = MyEditorUI::get()) {
-            editorUI->unscheduleAllSelectors();
-            editorUI->m_fields->m_objectsToRemove.clear();
+            editorUI->unschedule(schedule_selector(MyEditorUI::objectUpdate));
+        }
+    }
+
+    void restoreActions() {
+        if (auto editor = LevelEditorLayer::get()) {
+            for (auto object : CCArrayExt<GameObject*>(editor->m_objects)) {
+                object->resumeSchedulerAndActions();
+            }
+        }
+        if (auto editorUI = MyEditorUI::get()) {
+            editorUI->schedule(schedule_selector(MyEditorUI::objectUpdate));
         }
     }
 
     void saveLevel() {
         cleanupActions();
         EditorPauseLayer::saveLevel();
+        restoreActions();
     }
 
     void onExitNoSave(cocos2d::CCObject* sender) {

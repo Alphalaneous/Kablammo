@@ -25,8 +25,8 @@ public:
     void goToPage(int page);
 
     std::vector<KablammoObject*> m_kablammoObjects;
-    KablammoObject* m_grabbedObject;
-    KablammoObject* m_draggedObject;
+    WeakRef<KablammoObject> m_grabbedObject;
+    WeakRef<KablammoObject> m_draggedObject;
     bool m_showing = false;
     float m_heightOffset = 0;
     int m_page = 0;
